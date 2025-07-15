@@ -6,7 +6,7 @@ const db = require('../database/db');
 router.get('/', (req, res) => {
     db.all('SELECT * FROM turmas', (err, rows) => {
         if (err) return res.send("Erro ao listar turmas");
-        res.render('turmas/form', { turma: row, erro: null });
+        res.render('turmas/lista', { turmas: rows });
     });
 });
 
@@ -35,8 +35,10 @@ router.post('/nova', (req, res) => {
 // Formulário de edição
 router.get('/editar/:id', (req, res) => {
     db.get('SELECT * FROM turmas WHERE id = ?', [req.params.id], (err, row) => {
-        if (err) return res.send("Erro ao buscar turma");
-        res.render('turmas/form', { turma: row });
+        if (err) {
+            return res.render('turmas/form', { turma: {}, erro: 'Erro ao buscar turma.' });
+        }
+        res.render('turmas/form', { turma: row, erro: null });
     });
 });
 

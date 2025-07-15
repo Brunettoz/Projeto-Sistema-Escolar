@@ -10,6 +10,7 @@ router.get('/', (req, res) => {
         JOIN turmas ON alunos.turma_id = turmas.id
     `;
     db.all(query, (err, rows) => {
+        if (err) return res.send("Erro ao listar alunos.");
         res.render('alunos/lista', { alunos: rows });
     });
 });
@@ -17,7 +18,8 @@ router.get('/', (req, res) => {
 // Formulário novo aluno
 router.get('/novo', (req, res) => {
     db.all('SELECT * FROM turmas', (err, turmas) => {
-    res.render('alunos/form', { aluno, turmas, erro: null });
+        if (err) return res.send("Erro ao carregar turmas.");
+        res.render('alunos/form', { aluno: {}, turmas, erro: null });
     });
 });
 
@@ -44,8 +46,10 @@ router.post('/novo', (req, res) => {
 // Editar aluno
 router.get('/editar/:id', (req, res) => {
     db.get('SELECT * FROM alunos WHERE id = ?', [req.params.id], (err, aluno) => {
-        db.all('SELECT * FROM turmas', (err, turmas) => {
-            res.render('alunos/form', { aluno, turmas });
+        if (err || !aluno) return res.send("Erro ao buscar aluno.");
+        db.all('SELECT * FROM turmas', (err2, turmas) => {
+            if (err2) return res.send("Erro ao carregar turmas.");
+            res.render('alunos/form', { aluno, turmas, erro: null });
         });
     });
 });
@@ -53,14 +57,20 @@ router.get('/editar/:id', (req, res) => {
 // Atualizar aluno
 router.post('/editar/:id', (req, res) => {
     const { nome, matricula, turma_id } = req.body;
-    db.run('UPDATE alunos SET nome = ?, matricula = ?, turma_id = ? WHERE id = ?', [nome, matricula, turma_id, req.params.id], () => {
-        res.redirect('/alunos');
-    });
+    db.run(
+        'UPDATE alunos SET nome = ?, matricula = ?, turma_id = ? WHERE id = ?',
+        [nome, matricula, turma_id, req.params.id],
+        (err) => {
+            if (err) return res.send("Erro ao atualizar aluno.");
+            res.redirect('/alunos');
+        }
+    );
 });
 
 // Excluir aluno
 router.get('/excluir/:id', (req, res) => {
-    db.run('DELETE FROM alunos WHERE id = ?', [req.params.id], () => {
+    db.run('DELETE FROM alunos WHERE id = ?', [req.params.id], (err) => {
+        if (err) return res.send("Erro ao excluir aluno.");
         res.redirect('/alunos');
     });
 });
